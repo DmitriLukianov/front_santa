@@ -169,8 +169,8 @@ function SecretChat() {
   if (isLoading) {
     return (
       <div className="chat-page">
-        <div className="chat-container">
-          <div style={{ textAlign: 'center', padding: '50px', width: '100%' }}>
+        <div className="chat-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
             <i className="ti ti-loader" style={{ fontSize: '48px', color: '#44E858', animation: 'spin 1s linear infinite' }}></i>
             <p style={{ marginTop: '20px', color: '#757575' }}>Загрузка чата...</p>
           </div>
