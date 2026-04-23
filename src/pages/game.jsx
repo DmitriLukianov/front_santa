@@ -358,13 +358,15 @@ function Game() {
               Завершить игру
             </button>
           )}
-          <button
-            type="button"
-            className={isOrganizer ? 'btn-danger' : 'btn-secondary'}
-            onClick={handleLeaveGame}
-          >
-            {isOrganizer ? 'Удалить игру' : 'Выйти из игры'}
-          </button>
+          {(isOrganizer || gameStatus === 'registration') && (
+            <button
+              type="button"
+              className={isOrganizer ? 'btn-danger' : 'btn-secondary'}
+              onClick={handleLeaveGame}
+            >
+              {isOrganizer ? 'Удалить игру' : 'Выйти из игры'}
+            </button>
+          )}
         </div>
       </div>
     </div>

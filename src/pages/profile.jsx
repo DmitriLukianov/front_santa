@@ -269,14 +269,16 @@ function Profile() {
                         </span>
                       )}
                     </button>
-                    <button
-                      type="button"
-                      className="game-delete-btn"
-                      onClick={() => handleDeleteGame(game)}
-                      title={game.organizerId === user?.id ? 'Удалить игру' : 'Выйти из игры'}
-                    >
-                      <i className="ti ti-trash" style={{ fontSize: '18px', color: '#e74c3c' }}></i>
-                    </button>
+                    {(game.organizerId === user?.id || game.status === 'registration') && (
+                      <button
+                        type="button"
+                        className="game-delete-btn"
+                        onClick={() => handleDeleteGame(game)}
+                        title={game.organizerId === user?.id ? 'Удалить игру' : 'Выйти из игры'}
+                      >
+                        <i className="ti ti-trash" style={{ fontSize: '18px', color: '#e74c3c' }}></i>
+                      </button>
+                    )}
                   </div>
                 ))
               )}
