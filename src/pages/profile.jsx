@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Импортируем нужные методы API
-import { fetchMe, fetchUserGames, deleteGame, joinGameByLink, logout as apiLogout, isAuthenticated } from '/src/api/gameApi.jsx';
+import { fetchMe, fetchUserGames, deleteGame, joinGameByLink, logout as apiLogout, isAuthenticated, removeParticipant, fetchMyParticipant } from '/src/api/gameApi.jsx';
 import './main.css';
 
 function Profile() {
@@ -135,13 +135,25 @@ function Profile() {
 
   const handleDeleteGame = async (game) => {
     const name = game.title || `Игра #${game.id}`;
-    if (!window.confirm(`Удалить игру "${name}"?\nЭто действие нельзя отменить.`)) return;
-    try {
-      await deleteGame(game.id);
-    } catch (err) {
-      // Если игра уже не найдена (404) — всё равно убираем из списка
-      if (err.status !== 404) {
-        alert('Не удалось удалить игру. Попробуйте позже.');
+    const isOrganizer = game.organizerId === user?.id;
+
+    if (isOrganizer) {
+      if (!window.confirm(`Удалить игру "${name}"?\nЭто действие нельзя отменить.`)) return;
+      try {
+        await deleteGame(game.id);
+      } catch (err) {
+        if (err.status !== 404) {
+          alert('Не удалось удалить игру. Попробуйте позже.');
+          return;
+        }
+      }
+    } else {
+      if (!window.confirm(`Выйти из игры "${name}"?`)) return;
+      try {
+        const participant = await fetchMyParticipant(game.id);
+        await removeParticipant(participant.id);
+      } catch (err) {
+        alert('Не удалось выйти из игры. Попробуйте позже.');
         return;
       }
     }
@@ -257,16 +269,14 @@ function Profile() {
                         </span>
                       )}
                     </button>
-                    {game.organizerId === user?.id && (
-                      <button
-                        type="button"
-                        className="game-delete-btn"
-                        onClick={() => handleDeleteGame(game)}
-                        title="Удалить игру"
-                      >
-                        <i className="ti ti-trash" style={{ fontSize: '18px', color: '#e74c3c' }}></i>
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="game-delete-btn"
+                      onClick={() => handleDeleteGame(game)}
+                      title={game.organizerId === user?.id ? 'Удалить игру' : 'Выйти из игры'}
+                    >
+                      <i className="ti ti-trash" style={{ fontSize: '18px', color: '#e74c3c' }}></i>
+                    </button>
                   </div>
                 ))
               )}

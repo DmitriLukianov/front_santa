@@ -25,7 +25,7 @@ export {
   finishGame,
 } from './eventsApi.jsx';
 
-export { addParticipant, fetchParticipants, removeParticipant } from './participantsApi.jsx';
+export { addParticipant, fetchParticipants, removeParticipant, fetchMyParticipant } from './participantsApi.jsx';
 
 export { generateInviteLink, joinGameByLink, sendInviteEmail } from './invitationsApi.jsx';
 
