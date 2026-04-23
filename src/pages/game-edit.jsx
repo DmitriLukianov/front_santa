@@ -40,7 +40,9 @@ const validateDrawDate = (dateString, timeString = '00:00') => {
     errors.push('Введите корректную дату');
     return errors;
   }
-  if (date <= new Date()) {
+  const now = new Date();
+  now.setSeconds(0, 0);
+  if (date < now) {
     errors.push('Дата и время жеребьёвки не могут быть в прошлом');
   }
   return errors;
