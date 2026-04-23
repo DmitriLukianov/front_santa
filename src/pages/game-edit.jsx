@@ -146,17 +146,19 @@ function Game_edit() {
     loadData();
   }, [eventId, navigate]);
 
+  // Валидация даты/времени при любом изменении любого из двух полей
+  React.useEffect(() => {
+    if (touched.drawDate) {
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(formData.drawDate, formData.drawTime) }));
+    }
+  }, [formData.drawDate, formData.drawTime, touched.drawDate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
     if (name === 'drawDate') {
-      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, formData.drawTime) }));
       setTouched(prev => ({ ...prev, drawDate: true }));
-    } else if (name === 'drawTime') {
-      if (touched.drawDate) {
-        setErrors(prev => ({ ...prev, drawDate: validateDrawDate(formData.drawDate, value) }));
-      }
     } else if (touched[name]) {
       if (name === 'teamName') {
         setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));

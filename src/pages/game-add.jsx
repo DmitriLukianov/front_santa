@@ -136,19 +136,21 @@ function Game_add() {
     }
   };
 
+  // Валидация даты/времени при любом изменении любого из двух полей
+  React.useEffect(() => {
+    if (touched.drawDate) {
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(drawDate, drawTime) }));
+    }
+  }, [drawDate, drawTime, touched.drawDate]);
+
   const handleDateChange = (e) => {
     const value = e.target.value;
     setDrawDate(value);
-    setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, drawTime) }));
     setTouched(prev => ({ ...prev, drawDate: true }));
   };
 
   const handleTimeChange = (e) => {
-    const value = e.target.value;
-    setDrawTime(value);
-    if (touched.drawDate) {
-      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(drawDate, value) }));
-    }
+    setDrawTime(e.target.value);
   };
 
   const handleBudgetChange = (e) => {
