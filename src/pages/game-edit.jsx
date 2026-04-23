@@ -479,16 +479,7 @@ function Game_edit() {
                 onClick={handleCopyLink}
                 disabled={isCopied}
               >
-                {isCopied ? (
-                  <i 
-                    className="ti ti-check" 
-                    style={{ 
-                      fontSize: '18px', 
-                      color: '#1E1E1E',
-                      fontWeight: 'bold'
-                    }}
-                  />
-                ) : 'Копировать'}
+                {isCopied ? '✓ Скопировано!' : 'Копировать'}
               </button>
             </div>
           </div>
