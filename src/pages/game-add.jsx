@@ -143,6 +143,14 @@ function Game_add() {
     setTouched(prev => ({ ...prev, drawDate: true }));
   };
 
+  const handleTimeChange = (e) => {
+    const value = e.target.value;
+    setDrawTime(value);
+    if (touched.drawDate) {
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(drawDate, value) }));
+    }
+  };
+
   const handleBudgetChange = (e) => {
     const value = e.target.value;
     setGiftBudget(value);
@@ -302,7 +310,7 @@ function Game_add() {
               <input
                 type="time"
                 value={drawTime}
-                onChange={(e) => setDrawTime(e.target.value)}
+                onChange={handleTimeChange}
                 disabled={isSubmitting}
                 className="input-field"
                 style={{ flex: 1 }}

@@ -153,6 +153,10 @@ function Game_edit() {
     if (name === 'drawDate') {
       setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, formData.drawTime) }));
       setTouched(prev => ({ ...prev, drawDate: true }));
+    } else if (name === 'drawTime') {
+      if (touched.drawDate) {
+        setErrors(prev => ({ ...prev, drawDate: validateDrawDate(formData.drawDate, value) }));
+      }
     } else if (touched[name]) {
       if (name === 'teamName') {
         setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));
