@@ -263,13 +263,13 @@ function Profile() {
                       {game.status && (
                         <span
                           className="game-item-status"
-                          style={{ color: game.status === 'gifting' ? '#44E858' : game.status === 'finished' ? '#aaaaaa' : '#757575' }}
+                          style={{ color: game.status === 'gifting' ? '#44E858' : '#757575' }}
                         >
                           ● {game.status === 'gifting' ? 'Дарение' : game.status === 'finished' ? 'Завершена' : 'Регистрация'}
                         </span>
                       )}
                     </button>
-                    {(game.organizerId === user?.id || game.status === 'registration') && (
+                    {(game.organizerId === user?.id || game.status === 'registration' || game.status === 'finished') && (
                       <button
                         type="button"
                         className="game-delete-btn"

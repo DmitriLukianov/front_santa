@@ -37,8 +37,8 @@ const validatePrice = (price) => {
   if (num <= 0) {
     errors.push('Цена должна быть больше 0');
   }
-  if (num > 1000000) {
-    errors.push('Максимальная цена — 1 000 000');
+  if (num > 100000) {
+    errors.push('Максимальная цена — 100 000');
   }
   const parts = price.toString().split('.');
   if (parts[1] && parts[1].length > 2) {

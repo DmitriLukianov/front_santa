@@ -75,8 +75,8 @@ const validateBudget = (value) => {
     errors.push('Бюджет должен быть больше 0');
   }
 
-  if (num > 5000) {
-    errors.push('Бюджет слишком большой (макс. 5 000)');
+  if (num > 100000) {
+    errors.push('Бюджет слишком большой (макс. 100 000)');
   }
 
   return errors;

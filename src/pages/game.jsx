@@ -75,7 +75,7 @@ function Game() {
         })() : 'не указана',
         drawDateTs: game.drawDate ? new Date(game.drawDate).getTime() : null,
         stage: game.status === 'gifting' ? 'Дарение подарков' : game.status === 'finished' ? 'Завершена' : 'Добавление участников',
-        isChatAvailable: game.status === 'gifting'
+        isChatAvailable: game.status === 'gifting' || game.status === 'finished'
       });
 
     } catch (err) {
@@ -205,7 +205,7 @@ function Game() {
     try {
       await finishGame(eventId);
       setGameStatus('finished');
-      setGameData(prev => ({ ...prev, stage: 'Завершена', isChatAvailable: false }));
+      setGameData(prev => ({ ...prev, stage: 'Завершена', isChatAvailable: true }));
     } catch (err) {
       alert(err.message || 'Не удалось завершить игру. Попробуйте позже.');
     }
@@ -358,7 +358,7 @@ function Game() {
               Завершить игру
             </button>
           )}
-          {(isOrganizer || gameStatus === 'registration') && (
+          {(isOrganizer || gameStatus === 'registration' || gameStatus === 'finished') && (
             <button
               type="button"
               className={isOrganizer ? 'btn-danger' : 'btn-secondary'}

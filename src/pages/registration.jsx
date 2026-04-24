@@ -83,10 +83,13 @@ function Registration() {
   useEffect(() => () => clearInterval(cooldownRef.current), []);
 
   const handleSendCode = async () => {
+    const nameErrors = validateName(loginData.name);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!loginData.email || !emailRegex.test(loginData.email)) {
-      setErrors(prev => ({ ...prev, email: ['Введите корректный email'] }));
-      setTouched(prev => ({ ...prev, email: true }));
+    const emailErrors = (!loginData.email || !emailRegex.test(loginData.email)) ? ['Введите корректный email'] : [];
+
+    if (nameErrors.length > 0 || emailErrors.length > 0) {
+      setErrors(prev => ({ ...prev, name: nameErrors, email: emailErrors }));
+      setTouched(prev => ({ ...prev, name: true, email: true }));
       return;
     }
     setIsLoading(true);

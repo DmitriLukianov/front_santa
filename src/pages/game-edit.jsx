@@ -75,6 +75,7 @@ function Game_edit() {
 
   const [organizerNotes, setOrganizerNotes] = useState('');
   const [organizerId, setOrganizerId] = useState(null);
+  const [gameStatus, setGameStatus] = useState(null);
   const [participants, setParticipants] = useState([]);
   
   // Состояния загрузки и ошибок
@@ -116,6 +117,7 @@ function Game_edit() {
 
         setOrganizerNotes(game.organizerNotes || '');
         setOrganizerId(game.organizerId || null);
+        setGameStatus(game.status || null);
 
         // 2. Получаем ссылку-приглашение
         try {
@@ -425,16 +427,18 @@ function Game_edit() {
                       <span className="participant-name">{participant.userName || participant.userId}</span>
                       <span className="participant-email">{participant.userEmail}</span>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => handleRemoveParticipant(participant.id)}
-                      title=""
-                      disabled={isSaving}
-                      style={{ border: 'none' }}
-                    >
-                      <i className="ti ti-x" style={{ fontSize: '16px', color: 'black'}}></i>
-                    </button>
+                    {gameStatus === 'registration' && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => handleRemoveParticipant(participant.id)}
+                        title=""
+                        disabled={isSaving}
+                        style={{ border: 'none' }}
+                      >
+                        <i className="ti ti-x" style={{ fontSize: '16px', color: 'black'}}></i>
+                      </button>
+                    )}
                   </div>
                 ))
               )}
