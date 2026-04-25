@@ -69,6 +69,7 @@ function WishlistRed() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState([]);
+  const [existingImageURL, setExistingImageURL] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -103,6 +104,7 @@ function WishlistRed() {
           price: item.price ? String(item.price) : '',
           link: item.link || ''
         });
+        setExistingImageURL(item.imageUrl || '');
 
       } catch (err) {
         console.error('Ошибка загрузки товара:', err);
@@ -191,12 +193,12 @@ function WishlistRed() {
     try {
       setIsSaving(true);
 
-      // Загрузка нового файла (если выбран)
-      let imageURL = '';
+      // Загрузка нового файла или сохранение существующего URL
+      let imageURL = existingImageURL;
       if (files[0]) {
         try {
           const uploadResult = await uploadFile(files[0]);
-          imageURL = uploadResult?.url || '';
+          imageURL = uploadResult?.url || existingImageURL;
         } catch (uploadErr) {
           console.warn('Не удалось загрузить изображение:', uploadErr);
         }
@@ -374,9 +376,22 @@ function WishlistRed() {
                 onDrop={handleDrop}
                 style={{ opacity: isSaving ? 0.6 : 1, pointerEvents: isSaving ? 'none' : 'auto' }}
               >
-                <i className="ti ti-upload" style={{ fontSize: '48px', color: '#44E858' }}></i>
-                <div className="upload-text">Загрузить новый файл</div>
-                <div className="upload-hint">Можно загрузить не более 1 файла</div>
+                {existingImageURL && files.length === 0 ? (
+                  <>
+                    <img
+                      src={existingImageURL}
+                      alt="Текущее фото"
+                      style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '10px', marginBottom: '8px' }}
+                    />
+                    <div className="upload-hint">Нажмите, чтобы заменить фото</div>
+                  </>
+                ) : (
+                  <>
+                    <i className="ti ti-upload" style={{ fontSize: '48px', color: '#44E858' }}></i>
+                    <div className="upload-text">Загрузить новый файл</div>
+                    <div className="upload-hint">Можно загрузить не более 1 файла</div>
+                  </>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"

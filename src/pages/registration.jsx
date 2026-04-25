@@ -27,6 +27,7 @@ function Registration() {
   
   // Состояния интерфейса
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(null); // null = неизвестно, true = новый, false = существующий
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -40,7 +41,7 @@ function Registration() {
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setLoginData({ ...loginData, [name]: value });
-    if (name === 'email') { setIsCodeSent(false); setServerError(''); }
+    if (name === 'email') { setIsCodeSent(false); setIsNewUser(null); setServerError(''); }
     if (touched[name] && name === 'name') {
       setErrors(prev => ({ ...prev, name: validateName(value) }));
     }
@@ -55,15 +56,20 @@ function Registration() {
   };
 
   const isFormValid = () => {
-    const nameErrors = validateName(loginData.name);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     let isValid = true;
-    let newErrors = { ...errors, name: nameErrors };
+    let newErrors = { ...errors };
     if (!emailRegex.test(loginData.email)) {
       newErrors.email = ['Некорректный формат email'];
       isValid = false;
     } else { newErrors.email = []; }
-    if (nameErrors.length > 0) isValid = false;
+    if (isNewUser !== false) {
+      const nameErrors = validateName(loginData.name);
+      newErrors.name = nameErrors;
+      if (nameErrors.length > 0) isValid = false;
+    } else {
+      newErrors.name = [];
+    }
     setErrors(newErrors);
     return isValid;
   };
@@ -84,9 +90,11 @@ function Registration() {
   useEffect(() => () => clearInterval(cooldownRef.current), []);
 
   const handleSendCode = async () => {
-    const nameErrors = validateName(loginData.name);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const emailErrors = (!loginData.email || !emailRegex.test(loginData.email)) ? ['Введите корректный email'] : [];
+
+    // Валидируем имя только если пользователь ещё не известен как существующий
+    const nameErrors = isNewUser !== false ? validateName(loginData.name) : [];
 
     if (nameErrors.length > 0 || emailErrors.length > 0) {
       setErrors(prev => ({ ...prev, name: nameErrors, email: emailErrors }));
@@ -96,7 +104,8 @@ function Registration() {
     setIsLoading(true);
     setServerError('');
     try {
-      await sendOtpCode(loginData.email);
+      const result = await sendOtpCode(loginData.email);
+      setIsNewUser(result?.isNewUser ?? true);
       setIsCodeSent(true);
       setLoginData(prev => ({ ...prev, code: '' }));
       startCooldown();
@@ -142,11 +151,20 @@ function Registration() {
         )}
 
         <form onSubmit={handleLoginSubmit} className="auth-form" noValidate>
-          {/* Поле ФИО */}
-          <div className="form-group">
-            <input type="text" name="name" placeholder="Введите ФИО" value={loginData.name} onChange={handleLoginChange} onBlur={handleBlur} required disabled={isLoading} className={errors.name.length > 0 && touched.name ? 'input-error' : ''} />
-            {errors.name.length > 0 && touched.name && (<ul className="error-list">{errors.name.map((err, i) => (<li key={i} className="error-item">• {err}</li>))}</ul>)}
-          </div>
+          {/* Поле ФИО — только для новых пользователей */}
+          {isNewUser !== false && (
+            <div className="form-group">
+              <input type="text" name="name" placeholder="Введите ФИО" value={loginData.name} onChange={handleLoginChange} onBlur={handleBlur} required disabled={isLoading} className={errors.name.length > 0 && touched.name ? 'input-error' : ''} />
+              {errors.name.length > 0 && touched.name && (<ul className="error-list">{errors.name.map((err, i) => (<li key={i} className="error-item">• {err}</li>))}</ul>)}
+            </div>
+          )}
+
+          {/* Подсказка для существующего аккаунта */}
+          {isNewUser === false && (
+            <div style={{ fontSize: '14px', color: '#44A832', background: '#f0fff4', border: '1px solid #b2f0c0', borderRadius: '10px', padding: '10px 14px', marginBottom: '4px', textAlign: 'center' }}>
+              Аккаунт с этой почтой найден. Введите код для входа.
+            </div>
+          )}
           
           {/* Поле Email */}
           <div className="form-group">

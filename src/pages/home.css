@@ -52,7 +52,7 @@ body {
 
 /* Гирлянда — между секциями */
 .garland {
-  position: relative; 
+  position: relative;
   display: block;
   width: 100%;
   /* max-width: 1200px; */
@@ -206,7 +206,7 @@ body {
   /* Локальный фон */
   background-image: url('/bg_hero.png');
   background-size: cover;
-  background-position: center 85%;
+  background-position: center bottom;
   background-repeat: no-repeat;
   position: relative;
 }
