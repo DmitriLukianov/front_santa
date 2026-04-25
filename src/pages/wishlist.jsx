@@ -6,6 +6,7 @@ import {
   addWishlistItem,
   deleteWishlistItem,
   isAuthenticated,
+  fetchGameById,
 } from '/src/api/gameApi.jsx';
 import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
@@ -34,6 +35,8 @@ function Wishlist() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null);
 
+  const [budget, setBudget] = useState(null);
+
   // Состояния для модалки импорта
   const [showImport, setShowImport] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
@@ -52,7 +55,10 @@ function Wishlist() {
         setIsLoading(true);
         setError(null);
 
-        const wishlistData = await fetchMyWishlist(eventId);
+        const [wishlistData] = await Promise.all([
+          fetchMyWishlist(eventId),
+          eventId ? fetchGameById(eventId).then(g => setBudget(g.budget || null)).catch(() => {}) : Promise.resolve(),
+        ]);
         const wId = wishlistData.id;
         setWishlistId(wId);
 
@@ -166,23 +172,26 @@ function Wishlist() {
     }
   };
 
+  const isOverBudget = (item) => budget && item.price && Number(item.price) > budget;
+
   const toggleSelect = (id) => {
+    const item = personalItems.find(i => i.id === id);
+    if (isOverBudget(item)) return;
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
+  const selectableItems = personalItems.filter(i => !isOverBudget(i));
+
   const handleSelectAll = () => {
-    if (selectedIds.size === personalItems.length) {
+    if (selectedIds.size === selectableItems.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(personalItems.map(i => i.id)));
+      setSelectedIds(new Set(selectableItems.map(i => i.id)));
     }
   };
 
@@ -387,49 +396,59 @@ function Wishlist() {
               </p>
             ) : (
               <>
+                {budget && (
+                  <div style={{ fontSize: '13px', color: '#757575', marginBottom: '10px' }}>
+                    Бюджет игры: <strong>{budget.toLocaleString('ru-RU')} руб.</strong> — товары дороже недоступны для импорта.
+                  </div>
+                )}
                 <button
                   type="button"
                   className="btn-secondary"
                   style={{ marginBottom: '12px', fontSize: '13px', padding: '6px 12px' }}
                   onClick={handleSelectAll}
+                  disabled={selectableItems.length === 0}
                 >
-                  {selectedIds.size === personalItems.length ? 'Снять всё' : 'Выбрать всё'}
+                  {selectedIds.size === selectableItems.length && selectableItems.length > 0 ? 'Снять всё' : 'Выбрать всё'}
                 </button>
 
                 <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {personalItems.map(item => (
-                    <label
-                      key={item.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 12px',
-                        borderRadius: '10px',
-                        border: selectedIds.has(item.id) ? '2px solid #44E858' : '2px solid #eee',
-                        cursor: 'pointer',
-                        background: selectedIds.has(item.id) ? '#f0fff2' : '#fff',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(item.id)}
-                        onChange={() => toggleSelect(item.id)}
-                        style={{ width: '18px', height: '18px', accentColor: '#44E858', flexShrink: 0 }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.title}
-                        </div>
-                        {item.price && (
-                          <div style={{ fontSize: '13px', color: '#44E858', fontWeight: 600 }}>
-                            {Number(item.price).toLocaleString('ru-RU')} ₽
+                  {personalItems.map(item => {
+                    const overBudget = isOverBudget(item);
+                    return (
+                      <label
+                        key={item.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          border: overBudget ? '2px solid #f5c2c2' : selectedIds.has(item.id) ? '2px solid #44E858' : '2px solid #eee',
+                          cursor: overBudget ? 'not-allowed' : 'pointer',
+                          background: overBudget ? '#fff5f5' : selectedIds.has(item.id) ? '#f0fff2' : '#fff',
+                          opacity: overBudget ? 0.6 : 1,
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          disabled={overBudget}
+                          style={{ width: '18px', height: '18px', accentColor: '#44E858', flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.title}
                           </div>
-                        )}
-                      </div>
-                    </label>
-                  ))}
+                          <div style={{ fontSize: '13px', color: overBudget ? '#e74c3c' : '#44E858', fontWeight: 600 }}>
+                            {item.price ? `${Number(item.price).toLocaleString('ru-RU')} ₽` : ''}
+                            {overBudget && ' — превышает бюджет'}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
@@ -440,7 +459,7 @@ function Wishlist() {
                     disabled={selectedIds.size === 0 || isImporting}
                     style={{ flex: 1 }}
                   >
-                    {isImporting ? 'Импортирование...' : `Импортировать (${selectedIds.size})`}
+                    {isImporting ? 'Импортирование...' : `Импортировать${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`}
                   </button>
                   <button
                     type="button"

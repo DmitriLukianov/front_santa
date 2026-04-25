@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Импортируем нужные методы из вашего API
-import { fetchMyWishlist, addWishlistItem, isAuthenticated, uploadFile } from '/src/api/gameApi.jsx';
+import { fetchMyWishlist, addWishlistItem, isAuthenticated, uploadFile, fetchGameById } from '/src/api/gameApi.jsx';
 import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
@@ -29,7 +29,7 @@ const validateName = (name) => {
   return errors;
 };
 
-const validatePrice = (price) => {
+const validatePrice = (price, maxBudget = null) => {
   const errors = [];
   const num = parseFloat(price);
   if (isNaN(num)) {
@@ -41,6 +41,9 @@ const validatePrice = (price) => {
   }
   if (num > 100000) {
     errors.push('Максимальная цена — 100 000');
+  }
+  if (maxBudget && num > maxBudget) {
+    errors.push(`Цена превышает бюджет игры (${maxBudget.toLocaleString('ru-RU')} руб.)`);
   }
   const parts = price.toString().split('.');
   if (parts[1] && parts[1].length > 2) {
@@ -76,6 +79,13 @@ function WishlistAdd() {
   // ← НОВОЕ: Состояния для загрузки и ошибок сервера
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [budget, setBudget] = useState(null);
+
+  React.useEffect(() => {
+    if (eventId) {
+      fetchGameById(eventId).then(g => setBudget(g.budget || null)).catch(() => {});
+    }
+  }, [eventId]);
 
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState([]);
@@ -98,7 +108,7 @@ function WishlistAdd() {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setFormData(prev => ({ ...prev, price: value }));
       if (touched.price) {
-        setErrors(prev => ({ ...prev, price: validatePrice(value) }));
+        setErrors(prev => ({ ...prev, price: validatePrice(value, budget) }));
       }
     }
   };
@@ -117,13 +127,13 @@ function WishlistAdd() {
     if (name === 'name') {
       setErrors(prev => ({ ...prev, name: validateName(value) }));
     } else if (name === 'price') {
-      setErrors(prev => ({ ...prev, price: validatePrice(value) }));
+      setErrors(prev => ({ ...prev, price: validatePrice(value, budget) }));
     }
   };
 
   const isFormValid = () => {
     const nameErrors = validateName(formData.name);
-    const priceErrors = validatePrice(formData.price);
+    const priceErrors = validatePrice(formData.price, budget);
     setErrors({ name: nameErrors, price: priceErrors });
     return nameErrors.length === 0 && priceErrors.length === 0;
   };
@@ -238,10 +248,10 @@ function WishlistAdd() {
               
               <div className="form-group">
                 <label>Цена <span className="required">*</span></label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="price"
-                  placeholder="0" 
+                  placeholder="0"
                   value={formData.price}
                   onChange={handlePriceChange}
                   onBlur={handleBlur}
@@ -249,6 +259,9 @@ function WishlistAdd() {
                   disabled={isSubmitting}
                   className={errors.price.length > 0 && touched.price ? 'input-error' : ''}
                 />
+                {budget && (
+                  <div className="form-hint">Бюджет игры: {budget.toLocaleString('ru-RU')} руб.</div>
+                )}
                 {errors.price.length > 0 && touched.price && (
                   <ul className="error-list">
                     {errors.price.map((err, i) => (
