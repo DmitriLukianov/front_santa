@@ -19,6 +19,7 @@ function Game() {
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [myParticipantId, setMyParticipantId] = useState(null);
   const [countdown, setCountdown] = useState(null);
+  const [drawTimerFired, setDrawTimerFired] = useState(false);
 
   // Состояния загрузки и ошибок
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +77,7 @@ function Game() {
           return `${date} в ${h}:${m}`;
         })() : 'не указана',
         drawDateTs: game.drawDate ? new Date(game.drawDate).getTime() : null,
-        stage: game.status === 'gifting' ? 'Дарение подарков' : game.status === 'finished' ? 'Завершена' : 'Добавление участников',
+        stage: game.status === 'gifting' ? 'Дарение подарков' : game.status === 'finished' ? 'Завершена' : 'Регистрация участников',
         isChatAvailable: game.status === 'gifting' || game.status === 'finished'
       });
 
@@ -97,12 +98,13 @@ function Game() {
     loadData();
   }, [eventId, loadData, navigate]);
 
-  // Poll every 30s in background (no spinner) while draw hasn't happened yet
+  // После срабатывания таймера опрашиваем каждые 5с, иначе каждые 30с
   useEffect(() => {
     if (gameStatus !== 'registration') return;
-    const timer = setInterval(() => loadData(true), 30000);
+    const interval = drawTimerFired ? 5000 : 30000;
+    const timer = setInterval(() => loadData(true), interval);
     return () => clearInterval(timer);
-  }, [gameStatus, loadData]);
+  }, [gameStatus, drawTimerFired, loadData]);
 
   // Countdown timer — dependency на число (примитив), не перезапускается при каждом фоновом обновлении
   useEffect(() => {
@@ -120,7 +122,8 @@ function Game() {
         setCountdown(null);
         if (!refreshTriggered) {
           refreshTriggered = true;
-          loadData(true);
+          setDrawTimerFired(true);
+          loadData(false);
         }
         return;
       }
