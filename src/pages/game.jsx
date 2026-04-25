@@ -123,7 +123,7 @@ function Game() {
         if (!refreshTriggered) {
           refreshTriggered = true;
           setDrawTimerFired(true);
-          loadData(false);
+          loadData(true);
         }
         return;
       }
@@ -359,6 +359,9 @@ function Game() {
           <p className="info-text">Дата жеребьёвки: {gameData.drawDate}</p>
           {countdown && (
             <p className="countdown-inline">⏱ осталось: {countdown}</p>
+          )}
+          {drawTimerFired && gameStatus === 'registration' && (
+            <p className="countdown-inline" style={{ color: '#44A832' }}>⏳ Жеребьёвка проводится...</p>
           )}
         </div>
 
