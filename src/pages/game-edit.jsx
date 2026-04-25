@@ -62,6 +62,16 @@ const validateOrganizerNotes = (notes) => {
   return errors;
 };
 
+const validateBudget = (value) => {
+  const errors = [];
+  if (!value) return errors;
+  const num = Number(value);
+  if (isNaN(num)) errors.push('Бюджет должен быть числом');
+  else if (num <= 0) errors.push('Бюджет должен быть больше 0');
+  else if (num > 100000) errors.push('Бюджет слишком большой (макс. 100 000)');
+  return errors;
+};
+
 function Game_edit() {
   const navigate = useNavigate();
   const { eventId } = useParams();
@@ -81,6 +91,7 @@ function Game_edit() {
   });
 
   const [organizerNotes, setOrganizerNotes] = useState('');
+  const [giftBudget, setGiftBudget] = useState('');
   const [organizerId, setOrganizerId] = useState(null);
   const [gameStatus, setGameStatus] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -95,9 +106,10 @@ function Game_edit() {
   const currentTeamNameErrors = validateTeamName(formData.teamName);
   const currentDrawDateErrors = validateDrawDate(formData.drawDate, formData.drawTime);
   const currentOrganizerNotesErrors = validateOrganizerNotes(organizerNotes);
+  const currentBudgetErrors = validateBudget(giftBudget);
 
-  const [errors, setErrors] = useState({ teamName: [], drawDate: [], organizerNotes: [] });
-  const [touched, setTouched] = useState({ teamName: false, drawDate: false, organizerNotes: false });
+  const [errors, setErrors] = useState({ teamName: [], drawDate: [], organizerNotes: [], giftBudget: [] });
+  const [touched, setTouched] = useState({ teamName: false, drawDate: false, organizerNotes: false, giftBudget: false });
 
   // ← НОВОЕ: Загрузка данных игры при монтировании
   useEffect(() => {
@@ -126,6 +138,7 @@ function Game_edit() {
         });
 
         setOrganizerNotes(game.organizerNotes || '');
+        setGiftBudget(game.budget ? String(game.budget) : '');
         setOrganizerId(game.organizerId || null);
         setGameStatus(game.status || null);
 
@@ -196,13 +209,15 @@ function Game_edit() {
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
-    
+
     if (name === 'teamName') {
       setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));
     } else if (name === 'drawDate') {
       setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, formData.drawTime) }));
     } else if (name === 'organizerNotes') {
       setErrors(prev => ({ ...prev, organizerNotes: validateOrganizerNotes(value) }));
+    } else if (name === 'giftBudget') {
+      setErrors(prev => ({ ...prev, giftBudget: validateBudget(value) }));
     }
   };
 
@@ -210,8 +225,9 @@ function Game_edit() {
     const nameErrors = validateTeamName(formData.teamName);
     const dateErrors = validateDrawDate(formData.drawDate, formData.drawTime);
     const notesErrors = validateOrganizerNotes(organizerNotes);
-    setErrors({ teamName: nameErrors, drawDate: dateErrors, organizerNotes: notesErrors });
-    return nameErrors.length === 0 && dateErrors.length === 0 && notesErrors.length === 0;
+    const budgetErrors = validateBudget(giftBudget);
+    setErrors({ teamName: nameErrors, drawDate: dateErrors, organizerNotes: notesErrors, giftBudget: budgetErrors });
+    return nameErrors.length === 0 && dateErrors.length === 0 && notesErrors.length === 0 && budgetErrors.length === 0;
   };
 
   // ← НОВОЕ: Удаление участника через API
@@ -269,6 +285,7 @@ function Game_edit() {
       const updatedData = {
         title: formData.teamName,
         organizerNotes: organizerNotes || undefined,
+        budget: giftBudget ? parseInt(giftBudget, 10) : undefined,
         ...(formData.drawDate
           ? { drawDate: new Date(`${formData.drawDate}T${formData.drawTime}`).toISOString() }
           : { clearDrawDate: true }),
@@ -434,8 +451,37 @@ function Game_edit() {
               )}
             </div>
 
-            <button 
-              type="button" 
+            {/* Поле бюджета */}
+            <div className="form-group">
+              <label>Бюджет на подарок (руб.)</label>
+              <input
+                type="number"
+                name="giftBudget"
+                placeholder="Например: 1500"
+                value={giftBudget}
+                onChange={(e) => {
+                  setGiftBudget(e.target.value);
+                  if (touched.giftBudget) {
+                    setErrors(prev => ({ ...prev, giftBudget: validateBudget(e.target.value) }));
+                  }
+                }}
+                onBlur={handleBlur}
+                disabled={isSaving}
+                min="1"
+                step="100"
+                className={currentBudgetErrors.length > 0 && touched.giftBudget ? 'input-error' : ''}
+              />
+              {currentBudgetErrors.length > 0 && touched.giftBudget && (
+                <ul className="error-list">
+                  {currentBudgetErrors.map((err, i) => (
+                    <li key={i} className="error-item">• {err}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <button
+              type="button"
               className="btn-secondary"
               onClick={handleAddParticipant}
               disabled={isSaving}

@@ -77,6 +77,7 @@ function Game() {
           return `${date} в ${h}:${m}`;
         })() : 'не указана',
         drawDateTs: game.drawDate ? new Date(game.drawDate).getTime() : null,
+        budget: game.budget || null,
         stage: game.status === 'gifting' ? 'Дарение подарков' : game.status === 'finished' ? 'Завершена' : 'Регистрация участников',
         isChatAvailable: game.status === 'gifting' || game.status === 'finished'
       });
@@ -357,6 +358,9 @@ function Game() {
         <div className="game-info">
           <p className="info-text">Начало игры: {gameData.period}</p>
           <p className="info-text">Дата жеребьёвки: {gameData.drawDate}</p>
+          {gameData.budget && (
+            <p className="info-text">Бюджет подарка: {gameData.budget.toLocaleString('ru-RU')} руб.</p>
+          )}
           {countdown && (
             <p className="countdown-inline">⏱ осталось: {countdown}</p>
           )}

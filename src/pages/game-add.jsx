@@ -242,6 +242,7 @@ function Game_add() {
         title: teamName.trim(),
         drawDate: drawDate ? new Date(`${drawDate}T${drawTime}`).toISOString() : null,
         organizerNotes: organizerNotes.trim() || null,
+        budget: giftBudget ? parseInt(giftBudget, 10) : null,
         wantParticipate: wantParticipate,
       };
 
