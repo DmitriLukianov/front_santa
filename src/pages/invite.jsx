@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { joinGameByLink, isAuthenticated } from '/src/api/gameApi.jsx';
+import { savePendingInviteToken } from '/src/utils/pendingInvite.js';
 
 function InvitePage() {
   const { token } = useParams();
@@ -8,7 +9,7 @@ function InvitePage() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      sessionStorage.setItem('pendingInviteToken', token);
+      savePendingInviteToken(token);
       navigate('/registration', { replace: true });
       return;
     }

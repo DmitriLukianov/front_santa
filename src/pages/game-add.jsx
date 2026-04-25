@@ -57,6 +57,12 @@ const validateDrawDate = (dateString, timeString = '00:00') => {
   return errors;
 };
 
+const getLocalDateInputValue = () => {
+  const now = new Date();
+  const timezoneOffset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - timezoneOffset).toISOString().split('T')[0];
+};
+
 const validateBudget = (value) => {
   const errors = [];
   const num = Number(value);
@@ -126,7 +132,11 @@ function Game_add() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  const MIN_DATE = new Date().toISOString().split('T')[0];
+  const MIN_DATE = getLocalDateInputValue();
+  const currentTeamNameErrors = validateTeamName(teamName);
+  const currentDrawDateErrors = validateDrawDate(drawDate, drawTime);
+  const currentGiftBudgetErrors = validateBudget(giftBudget);
+  const currentOrganizerNotesErrors = validateOrganizerNotes(organizerNotes);
 
   // --- Обработчики изменений (без изменений) ---
 
@@ -149,10 +159,15 @@ function Game_add() {
     const value = e.target.value;
     setDrawDate(value);
     setTouched(prev => ({ ...prev, drawDate: true }));
+    setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, drawTime) }));
   };
 
   const handleTimeChange = (e) => {
-    setDrawTime(e.target.value);
+    const value = e.target.value;
+    setDrawTime(value);
+    if (touched.drawDate) {
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(drawDate, value) }));
+    }
   };
 
   const handleBudgetChange = (e) => {
@@ -178,7 +193,7 @@ function Game_add() {
     if (name === 'teamName') {
       setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));
     } else if (name === 'drawDate') {
-      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value) }));
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, drawTime) }));
     } else if (name === 'giftBudget') {
       setErrors(prev => ({ ...prev, giftBudget: validateBudget(value) }));
     } else if (name === 'organizerNotes') {
@@ -260,9 +275,10 @@ function Game_add() {
   const canSubmit = teamName.trim() && 
                     drawDate && 
                     giftBudget && 
-                    errors.teamName.length === 0 && 
-                    errors.drawDate.length === 0 &&
-                    errors.giftBudget.length === 0 &&
+                    currentTeamNameErrors.length === 0 && 
+                    currentDrawDateErrors.length === 0 &&
+                    currentGiftBudgetErrors.length === 0 &&
+                    currentOrganizerNotesErrors.length === 0 &&
                     !isSubmitting;
 
   return (
@@ -283,12 +299,12 @@ function Game_add() {
               onChange={handleTeamNameChange}
               onBlur={handleBlur}
               disabled={isSubmitting}
-              className={`input-field ${errors.teamName.length > 0 && touched.teamName ? 'input-error' : ''}`}
+              className={`input-field ${currentTeamNameErrors.length > 0 && touched.teamName ? 'input-error' : ''}`}
               required
             />
-            {errors.teamName.length > 0 && touched.teamName && (
+            {currentTeamNameErrors.length > 0 && touched.teamName && (
               <ul className="error-list">
-                {errors.teamName.map((err, i) => (
+                {currentTeamNameErrors.map((err, i) => (
                   <li key={i} className="error-item">• {err}</li>
                 ))}
               </ul>
@@ -307,7 +323,7 @@ function Game_add() {
                 onBlur={handleBlur}
                 disabled={isSubmitting}
                 min={MIN_DATE}
-                className={`input-field date-input ${errors.drawDate.length > 0 && touched.drawDate ? 'input-error' : ''}`}
+                className={`input-field date-input ${currentDrawDateErrors.length > 0 && touched.drawDate ? 'input-error' : ''}`}
                 style={{ flex: 2 }}
                 required
               />
@@ -320,9 +336,9 @@ function Game_add() {
                 style={{ flex: 1 }}
               />
             </div>
-            {errors.drawDate.length > 0 && touched.drawDate && (
+            {currentDrawDateErrors.length > 0 && touched.drawDate && (
               <ul className="error-list">
-                {errors.drawDate.map((err, i) => (
+                {currentDrawDateErrors.map((err, i) => (
                   <li key={i} className="error-item">• {err}</li>
                 ))}
               </ul>
@@ -342,12 +358,12 @@ function Game_add() {
               disabled={isSubmitting}
               min="1"
               step="100"
-              className={`input-field ${errors.giftBudget.length > 0 && touched.giftBudget ? 'input-error' : ''}`}
+              className={`input-field ${currentGiftBudgetErrors.length > 0 && touched.giftBudget ? 'input-error' : ''}`}
               required
             />
-            {errors.giftBudget.length > 0 && touched.giftBudget && (
+            {currentGiftBudgetErrors.length > 0 && touched.giftBudget && (
               <ul className="error-list">
-                {errors.giftBudget.map((err, i) => (
+                {currentGiftBudgetErrors.map((err, i) => (
                   <li key={i} className="error-item">• {err}</li>
                 ))}
               </ul>
@@ -364,13 +380,13 @@ function Game_add() {
               onChange={handleNotesChange}
               onBlur={handleBlur}
               disabled={isSubmitting}
-              className={`input-field input-notes ${errors.organizerNotes.length > 0 && touched.organizerNotes ? 'input-error' : ''}`}
+              className={`input-field input-notes ${currentOrganizerNotesErrors.length > 0 && touched.organizerNotes ? 'input-error' : ''}`}
               rows={4}
               maxLength={500}
             />
-            {errors.organizerNotes.length > 0 && touched.organizerNotes && (
+            {currentOrganizerNotesErrors.length > 0 && touched.organizerNotes && (
               <ul className="error-list">
-                {errors.organizerNotes.map((err, i) => (
+                {currentOrganizerNotesErrors.map((err, i) => (
                   <li key={i} className="error-item">• {err}</li>
                 ))}
               </ul>

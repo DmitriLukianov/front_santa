@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendOtpCode, verifyOtpCode } from '/src/api/gameApi.jsx';
+import { consumePendingInviteRedirectPath } from '/src/utils/pendingInvite.js';
 import './main.css';
 
 // ... (Функция validateName остается без изменений) ...
@@ -116,7 +117,8 @@ function Registration() {
     setServerError('');
     try {
       await verifyOtpCode(loginData.name, loginData.email, loginData.code);
-      navigate('/profile'); 
+      const pendingInviteRedirectPath = consumePendingInviteRedirectPath();
+      navigate(pendingInviteRedirectPath || '/profile', { replace: true });
     } catch (err) {
       setServerError(err.message || 'Неверный код или ошибка сервера.');
     } finally {

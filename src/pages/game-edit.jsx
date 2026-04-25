@@ -48,6 +48,12 @@ const validateDrawDate = (dateString, timeString = '00:00') => {
   return errors;
 };
 
+const getLocalDateInputValue = () => {
+  const now = new Date();
+  const timezoneOffset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - timezoneOffset).toISOString().split('T')[0];
+};
+
 const validateOrganizerNotes = (notes) => {
   const errors = [];
   if (notes && notes.length > 500) {
@@ -84,7 +90,10 @@ function Game_edit() {
   const [saveError, setSaveError] = useState('');
   const [inviteLink, setInviteLink] = useState('');
 
-  const MIN_DATE = new Date().toISOString().split('T')[0];
+  const MIN_DATE = getLocalDateInputValue();
+  const currentTeamNameErrors = validateTeamName(formData.teamName);
+  const currentDrawDateErrors = validateDrawDate(formData.drawDate, formData.drawTime);
+  const currentOrganizerNotesErrors = validateOrganizerNotes(organizerNotes);
 
   const [errors, setErrors] = useState({ teamName: [], drawDate: [], organizerNotes: [] });
   const [touched, setTouched] = useState({ teamName: false, drawDate: false, organizerNotes: false });
@@ -163,6 +172,11 @@ function Game_edit() {
 
     if (name === 'drawDate') {
       setTouched(prev => ({ ...prev, drawDate: true }));
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, formData.drawTime) }));
+    } else if (name === 'drawTime') {
+      if (touched.drawDate) {
+        setErrors(prev => ({ ...prev, drawDate: validateDrawDate(formData.drawDate, value) }));
+      }
     } else if (touched[name]) {
       if (name === 'teamName') {
         setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));
@@ -185,7 +199,7 @@ function Game_edit() {
     if (name === 'teamName') {
       setErrors(prev => ({ ...prev, teamName: validateTeamName(value) }));
     } else if (name === 'drawDate') {
-      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value) }));
+      setErrors(prev => ({ ...prev, drawDate: validateDrawDate(value, formData.drawTime) }));
     } else if (name === 'organizerNotes') {
       setErrors(prev => ({ ...prev, organizerNotes: validateOrganizerNotes(value) }));
     }
@@ -334,11 +348,11 @@ function Game_edit() {
                 onBlur={handleBlur}
                 placeholder="Введите название"
                 disabled={isSaving}
-                className={errors.teamName.length > 0 && touched.teamName ? 'input-error' : ''}
+                className={currentTeamNameErrors.length > 0 && touched.teamName ? 'input-error' : ''}
               />
-              {errors.teamName.length > 0 && touched.teamName && (
+              {currentTeamNameErrors.length > 0 && touched.teamName && (
                 <ul className="error-list">
-                  {errors.teamName.map((err, i) => (
+                  {currentTeamNameErrors.map((err, i) => (
                     <li key={i} className="error-item">• {err}</li>
                   ))}
                 </ul>
@@ -356,7 +370,7 @@ function Game_edit() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   disabled={isSaving}
-                  className={errors.drawDate.length > 0 && touched.drawDate ? 'input-error' : ''}
+                  className={currentDrawDateErrors.length > 0 && touched.drawDate ? 'input-error' : ''}
                   style={{ flex: 2 }}
                   min={MIN_DATE}
                 />
@@ -369,9 +383,9 @@ function Game_edit() {
                   style={{ flex: 1 }}
                 />
               </div>
-              {errors.drawDate.length > 0 && touched.drawDate && (
+              {currentDrawDateErrors.length > 0 && touched.drawDate && (
                 <ul className="error-list">
-                  {errors.drawDate.map((err, i) => (
+                  {currentDrawDateErrors.map((err, i) => (
                     <li key={i} className="error-item">• {err}</li>
                   ))}
                 </ul>
@@ -387,13 +401,13 @@ function Game_edit() {
                 onChange={handleNotesChange}
                 onBlur={handleBlur}
                 disabled={isSaving}
-                className={`input-field input-notes ${errors.organizerNotes.length > 0 && touched.organizerNotes ? 'input-error' : ''}`}
+                className={`input-field input-notes ${currentOrganizerNotesErrors.length > 0 && touched.organizerNotes ? 'input-error' : ''}`}
                 rows={4}
                 maxLength={500}
               />
-              {errors.organizerNotes.length > 0 && touched.organizerNotes && (
+              {currentOrganizerNotesErrors.length > 0 && touched.organizerNotes && (
                 <ul className="error-list">
-                  {errors.organizerNotes.map((err, i) => (
+                  {currentOrganizerNotesErrors.map((err, i) => (
                     <li key={i} className="error-item">• {err}</li>
                   ))}
                 </ul>

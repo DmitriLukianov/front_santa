@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { consumePendingInviteRedirectPath } from '/src/utils/pendingInvite.js';
 
 function AuthCallback() {
   const [searchParams] = useSearchParams();
@@ -9,10 +10,9 @@ function AuthCallback() {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('token', token);
-      const pendingInvite = sessionStorage.getItem('pendingInviteToken');
-      if (pendingInvite) {
-        sessionStorage.removeItem('pendingInviteToken');
-        navigate(`/invite/${pendingInvite}`, { replace: true });
+      const pendingInviteRedirectPath = consumePendingInviteRedirectPath();
+      if (pendingInviteRedirectPath) {
+        navigate(pendingInviteRedirectPath, { replace: true });
       } else {
         navigate('/profile', { replace: true });
       }
