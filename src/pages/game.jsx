@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Импортируем нужные методы API
-import { fetchGameById, fetchParticipants, fetchMe, removeParticipant, deleteGame, finishGame, isAuthenticated } from '/src/api/gameApi.jsx';
+import { fetchGameById, fetchParticipants, fetchMe, removeParticipant, deleteGame, finishGame, runDraw, isAuthenticated } from '/src/api/gameApi.jsx';
 import { addParticipant, fetchMyParticipant } from '/src/api/participantsApi.jsx';
 import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
@@ -245,6 +245,32 @@ function Game() {
     }
   };
 
+  const handleRunDraw = async () => {
+    const confirmed = await confirm({
+      title: 'Провести жеребьёвку?',
+      message: gameData?.drawDateTs
+        ? `Провести жеребьёвку сейчас? Указанная дата: ${gameData.drawDate}.`
+        : 'Провести жеребьёвку сейчас? После этого участники получат своих получателей.',
+      confirmLabel: 'Провести',
+    });
+    if (!confirmed) return;
+
+    try {
+      await runDraw(eventId);
+      await alert({
+        title: 'Жеребьёвка проведена',
+        message: 'Получатели распределены. Игра переведена в этап дарения.',
+      });
+      await loadData();
+    } catch (err) {
+      await alert({
+        title: 'Не удалось провести жеребьёвку',
+        message: err.message || 'Попробуйте позже.',
+        tone: 'danger',
+      });
+    }
+  };
+
   const handleDrawResult = async () => {
     if (!isDrawDone) {
       await alert({
@@ -358,14 +384,24 @@ function Game() {
               Секретный чат
             </button>
 
-            <button 
-              type="button" 
-              className="btn-primary"
-              onClick={handleDrawResult}
-              disabled={!isDrawDone}
-            >
-              Результат жеребьёвки
-            </button>
+            {isOrganizer && gameStatus === 'registration' ? (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleRunDraw}
+              >
+                Провести жеребьёвку
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                className="btn-primary"
+                onClick={handleDrawResult}
+                disabled={!isDrawDone}
+              >
+                Результат жеребьёвки
+              </button>
+            )}
           </div>
 
           <div className="buttons-column">

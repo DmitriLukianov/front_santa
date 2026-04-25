@@ -33,7 +33,6 @@ const validateTeamName = (name) => {
 const validateDrawDate = (dateString, timeString = '00:00') => {
   const errors = [];
   if (!dateString) {
-    errors.push('Дата жеребьёвки обязательна');
     return errors;
   }
   const date = new Date(`${dateString}T${timeString}`);
@@ -377,7 +376,7 @@ function Game_edit() {
 
             {/* Поле даты и времени жеребьёвки */}
             <div className="form-group">
-              <label>Дата и время жеребьёвки *</label>
+              <label>Дата и время жеребьёвки</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input
                   type="date"
@@ -395,9 +394,12 @@ function Game_edit() {
                   name="drawTime"
                   value={formData.drawTime}
                   onChange={handleChange}
-                  disabled={isSaving}
-                  style={{ flex: 1 }}
+                  disabled={isSaving || !formData.drawDate}
+                  style={{ flex: 1, opacity: formData.drawDate ? 1 : 0.6 }}
                 />
+              </div>
+              <div className="form-hint">
+                Поле необязательно. Если дату не указывать, жеребьёвку можно провести вручную на странице игры.
               </div>
               {currentDrawDateErrors.length > 0 && touched.drawDate && (
                 <ul className="error-list">

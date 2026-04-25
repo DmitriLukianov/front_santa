@@ -1302,6 +1302,12 @@ input:focus {
   border-top: 1px solid #eee;
 }
 
+.game-footer .btn-secondary,
+.game-footer .btn-danger-ghost {
+  flex: 1;
+  max-width: 185px;
+}
+
 .btn-leave {
   width: 100%;
   padding: 12px 28px;

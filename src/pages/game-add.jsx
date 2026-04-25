@@ -38,7 +38,6 @@ const validateDrawDate = (dateString, timeString = '00:00') => {
   const errors = [];
 
   if (!dateString) {
-    errors.push('Дата жеребьёвки обязательна');
     return errors;
   }
 
@@ -273,7 +272,6 @@ function Game_add() {
 
   // Кнопка активна, если нет ошибок и форма не отправляется
   const canSubmit = teamName.trim() && 
-                    drawDate && 
                     giftBudget && 
                     currentTeamNameErrors.length === 0 && 
                     currentDrawDateErrors.length === 0 &&
@@ -313,7 +311,7 @@ function Game_add() {
 
           {/* 2. Поле выбора даты и времени */}
           <div className="form-group date-group">
-            <label>Дата и время жеребьёвки <span className="required">*</span></label>
+            <label>Дата и время жеребьёвки</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               <input
                 type="date"
@@ -325,16 +323,18 @@ function Game_add() {
                 min={MIN_DATE}
                 className={`input-field date-input ${currentDrawDateErrors.length > 0 && touched.drawDate ? 'input-error' : ''}`}
                 style={{ flex: 2 }}
-                required
               />
               <input
                 type="time"
                 value={drawTime}
                 onChange={handleTimeChange}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !drawDate}
                 className="input-field"
-                style={{ flex: 1 }}
+                style={{ flex: 1, opacity: drawDate ? 1 : 0.6 }}
               />
+            </div>
+            <div className="form-hint">
+              Поле необязательно. Если не указывать дату, жеребьёвку можно будет провести вручную на странице игры.
             </div>
             {currentDrawDateErrors.length > 0 && touched.drawDate && (
               <ul className="error-list">
