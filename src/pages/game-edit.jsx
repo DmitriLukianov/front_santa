@@ -268,8 +268,10 @@ function Game_edit() {
 
       const updatedData = {
         title: formData.teamName,
-        drawDate: formData.drawDate ? new Date(`${formData.drawDate}T${formData.drawTime}`).toISOString() : undefined,
         organizerNotes: organizerNotes || undefined,
+        ...(formData.drawDate
+          ? { drawDate: new Date(`${formData.drawDate}T${formData.drawTime}`).toISOString() }
+          : { clearDrawDate: true }),
       };
 
       await updateGame(eventId, updatedData);
