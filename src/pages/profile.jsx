@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Импортируем нужные методы API
 import { fetchMe, fetchUserGames, deleteGame, joinGameByLink, logout as apiLogout, isAuthenticated, removeParticipant, fetchMyParticipant } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 function Profile() {
   const navigate = useNavigate();
+  const { alert, confirm } = useAppDialog();
 
   // Состояния для данных
   const [user, setUser] = useState(null);
@@ -138,30 +140,54 @@ function Profile() {
     const isOrganizer = game.organizerId === user?.id;
 
     if (isOrganizer) {
-      if (!window.confirm(`Удалить игру "${name}"?\nЭто действие нельзя отменить.`)) return;
+      const confirmed = await confirm({
+        title: 'Удалить игру?',
+        message: `Удалить игру "${name}"?\nЭто действие нельзя отменить.`,
+        confirmLabel: 'Удалить',
+        tone: 'danger',
+      });
+      if (!confirmed) return;
       try {
         await deleteGame(game.id);
       } catch (err) {
         if (err.status !== 404) {
-          alert('Не удалось удалить игру. Попробуйте позже.');
+          await alert({
+            title: 'Ошибка удаления',
+            message: 'Не удалось удалить игру. Попробуйте позже.',
+            tone: 'danger',
+          });
           return;
         }
       }
     } else {
-      if (!window.confirm(`Выйти из игры "${name}"?`)) return;
+      const confirmed = await confirm({
+        title: 'Выйти из игры?',
+        message: `Выйти из игры "${name}"?`,
+        confirmLabel: 'Выйти',
+      });
+      if (!confirmed) return;
       try {
         const participant = await fetchMyParticipant(game.id);
         await removeParticipant(participant.id);
       } catch (err) {
-        alert('Не удалось выйти из игры. Попробуйте позже.');
+        await alert({
+          title: 'Ошибка выхода',
+          message: 'Не удалось выйти из игры. Попробуйте позже.',
+          tone: 'danger',
+        });
         return;
       }
     }
     setGames(prev => prev.filter(g => g.id !== game.id));
   };
 
-  const handleLogout = () => {
-    if (window.confirm('Вы действительно хотите выйти из профиля?')) {
+  const handleLogout = async () => {
+    const confirmed = await confirm({
+      title: 'Выйти из профиля?',
+      message: 'Вы действительно хотите выйти из профиля?',
+      confirmLabel: 'Выйти',
+    });
+    if (confirmed) {
       apiLogout(); // Очищаем localStorage
       navigate('/', { replace: true });
     }

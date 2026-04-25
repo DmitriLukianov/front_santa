@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Импортируем нужные методы API
 import { fetchGameById, updateGame, fetchParticipants, removeParticipant, generateInviteLink, isAuthenticated, fetchMe } from '/src/api/gameApi.jsx';
 import { addParticipant } from '/src/api/participantsApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 // === ФУНКЦИИ ВАЛИДАЦИИ (без изменений) ===
@@ -65,6 +66,7 @@ const validateOrganizerNotes = (notes) => {
 function Game_edit() {
   const navigate = useNavigate();
   const { eventId } = useParams();
+  const { alert, confirm } = useAppDialog();
 
   React.useEffect(() => {
     if (!isAuthenticated()) {
@@ -215,14 +217,24 @@ function Game_edit() {
 
   // ← НОВОЕ: Удаление участника через API
   const handleRemoveParticipant = async (id) => {
-    if (window.confirm('Удалить этого участника из игры?')) {
+    const confirmed = await confirm({
+      title: 'Удалить участника?',
+      message: 'Удалить этого участника из игры?',
+      confirmLabel: 'Удалить',
+      tone: 'danger',
+    });
+    if (confirmed) {
       try {
         await removeParticipant(id);
         // Обновляем список локально
         setParticipants(prev => prev.filter(p => p.id !== id));
       } catch (error) {
         console.error('Ошибка удаления участника:', error);
-        alert('Не удалось удалить участника. Попробуйте позже.');
+        await alert({
+          title: 'Ошибка удаления',
+          message: 'Не удалось удалить участника. Попробуйте позже.',
+          tone: 'danger',
+        });
       }
     }
   };
@@ -235,7 +247,11 @@ function Game_edit() {
       const list = Array.isArray(updated) ? updated : (updated.items || []);
       setParticipants(list);
     } catch (error) {
-      alert(error.message || 'Не удалось присоединиться к игре.');
+      await alert({
+        title: 'Ошибка подключения',
+        message: error.message || 'Не удалось присоединиться к игре.',
+        tone: 'danger',
+      });
     }
   };
 

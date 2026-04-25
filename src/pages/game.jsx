@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Импортируем нужные методы API
 import { fetchGameById, fetchParticipants, fetchMe, removeParticipant, deleteGame, finishGame, isAuthenticated } from '/src/api/gameApi.jsx';
 import { addParticipant, fetchMyParticipant } from '/src/api/participantsApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 function Game() {
   const navigate = useNavigate();
   const { eventId } = useParams();
+  const { alert, confirm } = useAppDialog();
 
   // Состояния для данных
   const [gameData, setGameData] = useState(null);
@@ -155,15 +157,22 @@ function Game() {
   const handleLeaveGame = async () => {
     if (isOrganizer) {
       // Организатор удаляет игру для всех
-      const confirmed = window.confirm(
-        `Вы являетесь организатором игры "${gameData.teamName}".\n\nВыход удалит игру для всех участников. Это действие нельзя отменить.\n\nУдалить игру?`
-      );
+      const confirmed = await confirm({
+        title: 'Удалить игру?',
+        message: `Вы являетесь организатором игры "${gameData.teamName}".\n\nВыход удалит игру для всех участников. Это действие нельзя отменить.\n\nУдалить игру?`,
+        confirmLabel: 'Удалить',
+        tone: 'danger',
+      });
       if (!confirmed) return;
       try {
         await deleteGame(eventId);
         navigate('/profile');
       } catch (err) {
-        alert('Не удалось удалить игру. Попробуйте позже.');
+        await alert({
+          title: 'Ошибка удаления',
+          message: 'Не удалось удалить игру. Попробуйте позже.',
+          tone: 'danger',
+        });
       }
     } else {
       // Обычный участник
@@ -171,17 +180,31 @@ function Game() {
         ? `Жеребьёвка уже проведена.\n\nЕсли вы выйдете, ваш Санта потеряет получателя. Всё равно выйти из игры "${gameData.teamName}"?`
         : `Вы уверены, что хотите выйти из игры "${gameData.teamName}"?`;
 
-      if (!window.confirm(warningText)) return;
+      const confirmed = await confirm({
+        title: 'Подтвердите выход',
+        message: warningText,
+        confirmLabel: 'Выйти',
+        tone: isDrawDone ? 'danger' : 'default',
+      });
+      if (!confirmed) return;
 
       if (!myParticipantId) {
-        alert('Не удалось найти вашу запись участника. Обратитесь к организатору.');
+        await alert({
+          title: 'Не удалось выйти',
+          message: 'Не удалось найти вашу запись участника. Обратитесь к организатору.',
+          tone: 'danger',
+        });
         return;
       }
       try {
         await removeParticipant(myParticipantId);
         navigate('/profile');
       } catch (err) {
-        alert('Не удалось выйти из игры. Попробуйте позже.');
+        await alert({
+          title: 'Ошибка выхода',
+          message: 'Не удалось выйти из игры. Попробуйте позже.',
+          tone: 'danger',
+        });
       }
     }
   };
@@ -193,35 +216,52 @@ function Game() {
       // Обновим счётчик участников
       setParticipantsCount(prev => prev + 1);
     } catch (err) {
-      alert(err.message || 'Не удалось присоединиться к игре.');
+      await alert({
+        title: 'Ошибка подключения',
+        message: err.message || 'Не удалось присоединиться к игре.',
+        tone: 'danger',
+      });
     }
   };
 
   const handleFinishGame = async () => {
-    const confirmed = window.confirm(
-      `Завершить игру "${gameData.teamName}"?\n\nПосле завершения игра перейдёт в архив и станет недоступна для новых действий.`
-    );
+    const confirmed = await confirm({
+      title: 'Завершить игру?',
+      message: `Завершить игру "${gameData.teamName}"?\n\nПосле завершения игра перейдёт в архив и станет недоступна для новых действий.`,
+      confirmLabel: 'Завершить',
+      tone: 'danger',
+    });
     if (!confirmed) return;
     try {
       await finishGame(eventId);
       setGameStatus('finished');
       setGameData(prev => ({ ...prev, stage: 'Завершена', isChatAvailable: true }));
     } catch (err) {
-      alert(err.message || 'Не удалось завершить игру. Попробуйте позже.');
+      await alert({
+        title: 'Ошибка завершения',
+        message: err.message || 'Не удалось завершить игру. Попробуйте позже.',
+        tone: 'danger',
+      });
     }
   };
 
-  const handleDrawResult = () => {
+  const handleDrawResult = async () => {
     if (!isDrawDone) {
-      alert('Жеребьёвка ещё не проведена!');
+      await alert({
+        title: 'Жеребьёвка ещё не проведена',
+        message: 'Письмо Санте откроется после проведения жеребьёвки.',
+      });
       return;
     }
     navigate(`/game/${eventId}/letter`);
   };
 
-  const handleSecretChat = () => {
+  const handleSecretChat = async () => {
     if (!isDrawDone) {
-      alert('Секретный чат будет доступен после жеребьёвки!');
+      await alert({
+        title: 'Чат пока недоступен',
+        message: 'Секретный чат будет доступен после жеребьёвки.',
+      });
       return;
     }
     navigate(`/game/${eventId}/chat`);
@@ -361,7 +401,7 @@ function Game() {
           {(isOrganizer || gameStatus === 'registration' || gameStatus === 'finished') && (
             <button
               type="button"
-              className={isOrganizer ? 'btn-danger' : 'btn-secondary'}
+              className={isOrganizer ? 'btn-danger-ghost' : 'btn-secondary'}
               onClick={handleLeaveGame}
             >
               {isOrganizer ? 'Удалить игру' : 'Выйти из игры'}

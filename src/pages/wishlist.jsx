@@ -7,6 +7,7 @@ import {
   deleteWishlistItem,
   isAuthenticated,
 } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,6 +23,7 @@ const normalizeImageUrl = (url) => {
 function Wishlist() {
   const navigate = useNavigate();
   const { eventId: rawEventId } = useParams();
+  const { alert, confirm } = useAppDialog();
   const eventId = rawEventId && UUID_RE.test(rawEventId) ? rawEventId : undefined;
 
   const [gifts, setGifts] = useState([]);
@@ -95,7 +97,13 @@ function Wishlist() {
 
   const handleDelete = async (itemId) => {
     if (!wishlistId) return;
-    if (window.confirm('Удалить этот подарок?')) {
+    const confirmed = await confirm({
+      title: 'Удалить подарок?',
+      message: 'Удалить этот подарок?',
+      confirmLabel: 'Удалить',
+      tone: 'danger',
+    });
+    if (confirmed) {
       try {
         const prevGifts = [...gifts];
         setGifts(prev => prev.filter(gift => gift.id !== itemId));
@@ -103,7 +111,11 @@ function Wishlist() {
         await deleteWishlistItem(wishlistId, itemId);
       } catch (err) {
         console.error('Ошибка удаления:', err);
-        alert('Не удалось удалить товар. Попробуйте снова.');
+        await alert({
+          title: 'Ошибка удаления',
+          message: 'Не удалось удалить товар. Попробуйте снова.',
+          tone: 'danger',
+        });
         setGifts(prevGifts);
       }
     }
@@ -143,7 +155,11 @@ function Wishlist() {
       setPersonalItems(list.filter(item => !existingTitles.has(item.title.toLowerCase())));
     } catch (err) {
       console.error('Ошибка загрузки личного вишлиста:', err);
-      alert('Не удалось загрузить личный вишлист.');
+      await alert({
+        title: 'Ошибка загрузки',
+        message: 'Не удалось загрузить личный вишлист.',
+        tone: 'danger',
+      });
       setShowImport(false);
     } finally {
       setIsLoadingPersonal(false);
@@ -196,11 +212,19 @@ function Wishlist() {
         setShowImport(false);
       }
       if (failed > 0) {
-        alert(`Не удалось добавить ${failed} из ${toImport.length} товаров.`);
+        await alert({
+          title: 'Импорт завершён с ошибками',
+          message: `Не удалось добавить ${failed} из ${toImport.length} товаров.`,
+          tone: 'danger',
+        });
       }
     } catch (err) {
       console.error('Ошибка импорта:', err);
-      alert('Не удалось импортировать товары.');
+      await alert({
+        title: 'Ошибка импорта',
+        message: 'Не удалось импортировать товары.',
+        tone: 'danger',
+      });
     } finally {
       setIsImporting(false);
     }

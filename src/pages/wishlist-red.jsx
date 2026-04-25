@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchMyWishlist, fetchWishlistItems, deleteWishlistItem, updateWishlistItem, isAuthenticated, uploadFile } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 // === ФУНКЦИИ ВАЛИДАЦИИ ===
@@ -51,6 +52,7 @@ function WishlistRed() {
   const navigate = useNavigate();
   const { eventId, itemId } = useParams();
   const fileInputRef = useRef(null);
+  const { alert, confirm } = useAppDialog();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -178,7 +180,11 @@ function WishlistRed() {
     }
 
     if (!wishlistId) {
-      alert('Ошибка: Вишлист не найден');
+      await alert({
+        title: 'Ошибка',
+        message: 'Вишлист не найден.',
+        tone: 'danger',
+      });
       return;
     }
 
@@ -208,16 +214,30 @@ function WishlistRed() {
       handleGoWishlist();
     } catch (err) {
       console.error('Ошибка сохранения:', err);
-      alert(`Не удалось сохранить: ${err.message}`);
+      await alert({
+        title: 'Ошибка сохранения',
+        message: `Не удалось сохранить: ${err.message}`,
+        tone: 'danger',
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Удалить этот товар?')) return;
+    const confirmed = await confirm({
+      title: 'Удалить товар?',
+      message: 'Удалить этот товар?',
+      confirmLabel: 'Удалить',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     if (!wishlistId) {
-      alert('Ошибка: Вишлист не найден');
+      await alert({
+        title: 'Ошибка',
+        message: 'Вишлист не найден.',
+        tone: 'danger',
+      });
       return;
     }
     try {
@@ -225,7 +245,11 @@ function WishlistRed() {
       handleGoWishlist();
     } catch (err) {
       console.error('Ошибка удаления:', err);
-      alert(`Не удалось удалить: ${err.message}`);
+      await alert({
+        title: 'Ошибка удаления',
+        message: `Не удалось удалить: ${err.message}`,
+        tone: 'danger',
+      });
     }
   };
 

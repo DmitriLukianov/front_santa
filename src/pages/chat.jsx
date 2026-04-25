@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchRecipientChat, fetchSenderChat, sendMessage, sendMessageToSanta, fetchAssignments, fetchGameById, fetchMe, isAuthenticated } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 function SecretChat() {
   const navigate = useNavigate();
   const { eventId } = useParams();
+  const { alert } = useAppDialog();
 
   const [activeTab, setActiveTab] = useState('recipient');
   const [message, setMessage] = useState('');
@@ -152,7 +154,11 @@ function SecretChat() {
       await loadMessages();
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
-      alert('Не удалось отправить сообщение. Попробуйте позже.');
+      await alert({
+        title: 'Ошибка отправки',
+        message: 'Не удалось отправить сообщение. Попробуйте позже.',
+        tone: 'danger',
+      });
       setMessages(prev => ({
         ...prev,
         [activeTab]: prev[activeTab].filter(m => m.id !== tempId)

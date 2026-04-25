@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Импортируем функцию для получения данных пользователя
 import { fetchMe, fetchUserGames } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 function Registration_end() {
   const navigate = useNavigate();
+  const { alert } = useAppDialog();
   
   // Состояния для данных
   const [isLoading, setIsLoading] = useState(true);
@@ -45,14 +47,17 @@ function Registration_end() {
     navigate('/');
   };
 
-  const handleGoWishlist = () => {
+  const handleGoWishlist = async () => {
     // Если есть игры, ведем на вишлист первой игры (или последней созданной)
     if (games.length > 0) {
       const firstGameId = games[0].id;
       navigate(`/game/${firstGameId}/wishlist`);
     } else {
       // Если игр нет, можно предложить создать игру или вести в профиль
-      alert('У вас пока нет активных игр. Сначала создайте игру или подключитесь к существующей.');
+      await alert({
+        title: 'Пока нет игр',
+        message: 'У вас пока нет активных игр. Сначала создайте игру или подключитесь к существующей.',
+      });
       navigate('/profile');
     }
   };

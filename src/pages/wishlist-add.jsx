@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Импортируем нужные методы из вашего API
 import { fetchMyWishlist, addWishlistItem, isAuthenticated, uploadFile } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 // === ФУНКЦИИ ВАЛИДАЦИИ (без изменений) ===
@@ -53,6 +54,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function WishlistAdd() {
   const navigate = useNavigate();
   const { eventId: rawEventId } = useParams();
+  const { alert } = useAppDialog();
   const eventId = rawEventId && UUID_RE.test(rawEventId) ? rawEventId : undefined;
 
   React.useEffect(() => {
@@ -194,7 +196,11 @@ function WishlistAdd() {
     } catch (error) {
       console.error('Ошибка при добавлении товара:', error);
       setSubmitError(error.message || 'Не удалось добавить товар. Попробуйте позже.');
-      alert(error.message || 'Ошибка при добавлении товара');
+      await alert({
+        title: 'Ошибка добавления',
+        message: error.message || 'Ошибка при добавлении товара',
+        tone: 'danger',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -316,7 +322,7 @@ function WishlistAdd() {
               disabled={isSubmitting}
               style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
             >
-              {isSubmitting ? 'Добавление...' : 'Добавь в вишлист'}
+              {isSubmitting ? 'Добавление...' : 'Добавить в вишлист'}
             </button>
             <button 
               type="button" 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Импортируем методы API
 import { fetchMe, updateMe, isAuthenticated } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 // === ФУНКЦИИ ВАЛИДАЦИИ (без изменений) ===
@@ -50,6 +51,7 @@ const validateEmail = (email) => {
 
 function Profile_red() {
   const navigate = useNavigate();
+  const { alert } = useAppDialog();
   
   // Состояния для данных формы
   const [formData, setFormData] = useState({
@@ -158,13 +160,20 @@ function Profile_red() {
       // Вызов API обновления
       await updateMe(userData);
 
-      alert('Данные успешно сохранены!');
+      await alert({
+        title: 'Данные сохранены',
+        message: 'Профиль успешно обновлён.',
+      });
       handleGoProfile();
       
     } catch (err) {
       console.error('Ошибка сохранения:', err);
       setSubmitError(err.message || 'Не удалось сохранить изменения. Попробуйте позже.');
-      alert(err.message || 'Ошибка при сохранении');
+      await alert({
+        title: 'Ошибка сохранения',
+        message: err.message || 'Ошибка при сохранении',
+        tone: 'danger',
+      });
     } finally {
       setIsSaving(false);
     }

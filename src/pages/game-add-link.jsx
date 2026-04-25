@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 // Импортируем нужные методы API
 import { generateInviteLink, sendInviteEmail } from '/src/api/gameApi.jsx';
+import { useAppDialog } from '/src/components/app-dialogs.jsx';
 import './main.css';
 
 function Game_add_link() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { alert } = useAppDialog();
     // Получаем ID игры из state (передаётся при создании) или используем заглушку
     const createdEventId = location.state?.eventId;
     
@@ -103,7 +105,10 @@ function Game_add_link() {
             // Вызов API отправки приглашения
             await sendInviteEmail(createdEventId, email);
             
-            alert(`Приглашение отправлено на ${email}`);
+            await alert({
+                title: 'Приглашение отправлено',
+                message: `Приглашение отправлено на ${email}`,
+            });
             setEmail('');
             handleCloseModal();
         } catch (error) {
